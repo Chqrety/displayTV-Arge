@@ -20,7 +20,7 @@
                         </div>
                         <div class="col-span-2 row-span-2 flex flex-col rounded-lg bg-black/30">
                             <div class="w-full p-2">
-                                <span class="text-xl font-medium text-white">Antrian Selanjutnya</span>
+                                <span class="text-xl font-medium text-white">Riwayat Antrian</span>
                             </div>
                             <div class="flex h-full flex-col justify-around gap-5 px-5 py-3">
                                 @for ($j = 1; $j <= 5; $j++)
@@ -33,10 +33,10 @@
                         </div>
                         <div class="flex flex-col gap-2 rounded-lg bg-black/30 px-5 py-2 text-center">
                             <div>
-                                <span class="text-xl font-bold text-white">NOMOR ANTRIAN</span>
+                                <span class="text-xl font-bold text-white" id="text_no_antrian">NOMOR ANTRIAN</span>
                             </div>
                             <div class="bg-white/15 flex h-5/6 flex-col items-center justify-center rounded-lg text-white">
-                                <span class="text-9xl font-bold text-yellow-300" id="no_antrian">C.10</span>
+                                <span class="text-9xl font-bold text-yellow-300" id="no_antrian">C.56</span>
                                 <span class="text-3xl font-medium" id="nama_poli">POLI 5</span>
                             </div>
                         </div>
@@ -66,7 +66,10 @@
         setInterval(updateClock, 1000);
         updateClock();
 
+        var base_url = '{{ $baseUrl }}';
+
         function splitText() {
+            var text_no_antrian = document.getElementById('text_no_antrian').textContent;
             var no_antrian = document.getElementById('no_antrian').textContent;
             var nama_poli = document.getElementById('nama_poli').textContent;
 
@@ -100,12 +103,8 @@
                         parsedElements.push(current, 'puluh');
                         i++;
                     } else {
-                        if (next !== undefined) {
-                            parsedElements.push(current, 'puluh', next);
-                            i++;
-                        } else {
-                            parsedElements.push(current);
-                        }
+                        parsedElements.push(current, next);
+                        i++;
                     }
 
                 } else { // Handle variable
@@ -115,9 +114,12 @@
 
             // Split nama_poli dari jarak menjadi kata yang terpisah
             var nama_poli_elements = nama_poli.split(' ');
+            if (nama_poli_elements.length === 2) {
+                nama_poli_elements = [`ke ${nama_poli_elements[0]}`, nama_poli_elements[1]];
+            }
 
             // gabungkan antara array tadi
-            var textToSpeech = [...parsedElements, ...nama_poli_elements];
+            var textToSpeech = [text_no_antrian, ...parsedElements, ...nama_poli_elements];
 
             console.log(textToSpeech);
             return textToSpeech;
@@ -125,7 +127,11 @@
 
         function playSpeech() {
             var elements = splitText();
-            var path = 'http://127.0.0.1:8000/assets/google_voices/';
+            var path = base_url + '/assets/google_voices/';
+            var playButton = document.getElementById('playButton');
+
+            // matikan button ketika sedang menjalankan audio
+            playButton.disabled = true;
 
             function playSequentially(index) {
                 if (index < elements.length) {
@@ -137,14 +143,17 @@
                     }).catch(error => {
                         console.log('Error playing audio:', error);
                     });
+                } else {
+                    // aktifkan button ketika audio telah selesai
+                    playButton.disabled = false;
                 }
             }
 
-            // mulai mainkan elemen audio
+            // mulai audio
             playSequentially(0);
         }
 
-        // Add event listener to the play button
+        // menambahkan event listener untuk button
         document.getElementById('playButton').addEventListener('click', function() {
             playSpeech();
         });
