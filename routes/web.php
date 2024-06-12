@@ -18,5 +18,8 @@ Route::delete('/siswa/destroy/{id}', [SiswaController::class, 'destroy'])->name(
 // Route::post('/antrian/tv', [DisplayController::class, 'index'])->name('display.index')->withoutMiddleware(\App\Http\Middleware\VerifyCsrfToken::class);
 
 Route::get('/antrian', [AntrianController::class, 'index'])->name('antrian.index');
-Route::get('/display', [DisplayController::class, 'index'])->name('display.index');
+Route::get('/antrian/data', [AntrianController::class, 'data'])->name('antrian.data');
+Route::post('/antrian/store', [AntrianController::class, 'store'])->name('antrian.store');
+Route::post('/antrian/generate', [AntrianController::class, 'generate'])->name('antrian.generate');
 
+Route::get('/display', [DisplayController::class, 'index'])->name('display.index');

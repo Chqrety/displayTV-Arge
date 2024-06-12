@@ -1,4 +1,6 @@
-@extends('layouts.main') @section('content')
+@extends('layouts.main')
+
+@section('content')
     <section class="flex h-screen flex-col">
         <div class="fixed right-5 top-5 flex gap-2 rounded-lg bg-black/30 p-4 text-white">
             <div class="flex flex-col text-right">
@@ -25,8 +27,8 @@
                             <div class="flex h-full flex-col justify-around gap-5 px-5 py-3">
                                 @for ($j = 1; $j <= 5; $j++)
                                     <div class="flex h-full w-full items-center justify-around bg-white/5 text-white">
-                                        <span class="text-7xl font-medium">C.05</span>
-                                        <span class="text-3xl font-medium">Poli 3</span>
+                                        <span class="text-7xl font-medium" id="no_antrian_{{ $j }}"></span>
+                                        <span class="text-3xl font-medium" id="no_poli_{{ $j }}"></span>
                                     </div>
                                 @endfor
                             </div>
@@ -36,13 +38,13 @@
                                 <span class="text-xl font-bold text-white" id="text_no_antrian">NOMOR ANTRIAN</span>
                             </div>
                             <div class="bg-white/15 flex h-5/6 flex-col items-center justify-center rounded-lg text-white">
-                                <span class="text-9xl font-bold text-yellow-300" id="no_antrian">C.56</span>
-                                <span class="text-3xl font-medium" id="nama_poli">POLI 5</span>
+                                <span class="text-9xl font-bold text-yellow-300" id="no_antrian_now">C.56</span>
+                                <span class="text-3xl font-medium" id="no_poli_now">POLI 5</span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <button class="mt-4 rounded bg-white/10 p-2 text-white" id="playButton">Play</button>
+                <button class="mt-4 hidden rounded bg-white/10 p-2 text-white" id="playButton">Play</button>
             </div>
         </div>
         <div class="w-full overflow-hidden bg-black/30 py-1">
@@ -67,14 +69,54 @@
         updateClock();
 
         var base_url = '{{ $baseUrl }}';
+        var urlAPI = base_url + '/antrian/data';
+
+        async function fetchDataAntrian() {
+            try {
+                const response = await fetch(urlAPI);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data');
+                }
+                const data = await response.json();
+                updateUI(data);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        function updateUI(data) {
+            const reversedData = data.reverse();
+            const firstFiveData = reversedData.slice(0, 5);
+
+            for (let i = 0; i < firstFiveData.length; i++) {
+                const item = firstFiveData[i];
+                const noAntrianSpan = document.getElementById(`no_antrian_${i + 1}`);
+                const noPoliSpan = document.getElementById(`no_poli_${i + 1}`);
+
+                if (noAntrianSpan && noPoliSpan) {
+                    noAntrianSpan.textContent = item.no_antrian;
+                    noPoliSpan.textContent = `POLI ${item.no_poli}`;
+                }
+            }
+
+            const newestData = firstFiveData[0];
+            document.getElementById('no_antrian_now').textContent = newestData.no_antrian;
+            document.getElementById('no_poli_now').textContent = `POLI ${newestData.no_poli}`;
+        }
+
+        // Panggil fetchDataAntrian() untuk pertama kali
+        fetchDataAntrian();
+
+        // Atur polling untuk memperbarui data setiap beberapa detik
+        setInterval(fetchDataAntrian, 1000); // Contoh: polling setiap 1 detik
 
         function splitText() {
             var text_no_antrian = document.getElementById('text_no_antrian').textContent;
-            var no_antrian = document.getElementById('no_antrian').textContent;
-            var nama_poli = document.getElementById('nama_poli').textContent;
+            var no_antrian_now = document.getElementById('no_antrian_now').textContent;
+            var no_poli_now = document.getElementById('no_poli_now').textContent;
 
             // Split no_antrian menjadi elemen individu lalu filter dot
-            var no_antrian_elements = no_antrian.split('').filter(char => char !== '.');
+            var no_antrian_elements = no_antrian_now.split('').filter(char => char !== '.');
 
             // buat variable penguraian elemen no_antrian
             var parsedElements = [];
@@ -112,14 +154,14 @@
                 }
             }
 
-            // Split nama_poli dari jarak menjadi kata yang terpisah
-            var nama_poli_elements = nama_poli.split(' ');
-            if (nama_poli_elements.length === 2) {
-                nama_poli_elements = [`ke ${nama_poli_elements[0]}`, nama_poli_elements[1]];
+            // Split no_poli_now dari jarak menjadi kata yang terpisah
+            var no_poli_now_elements = no_poli_now.split(' ');
+            if (no_poli_now_elements.length === 2) {
+                no_poli_now_elements = [`ke ${no_poli_now_elements[0]}`, no_poli_now_elements[1]];
             }
 
             // gabungkan antara array tadi
-            var textToSpeech = [text_no_antrian, ...parsedElements, ...nama_poli_elements];
+            var textToSpeech = [text_no_antrian, ...parsedElements, ...no_poli_now_elements];
 
             console.log(textToSpeech);
             return textToSpeech;
@@ -152,6 +194,40 @@
             // mulai audio
             playSequentially(0);
         }
+
+        // Fungsi untuk membuat observer
+        function createObserver() {
+            const targetNode = document.getElementById('no_antrian_now');
+
+            // Buat instance MutationObserver
+            const observer = new MutationObserver((mutationsList, observer) => {
+                // Periksa setiap mutasi yang terjadi
+                for (const mutation of mutationsList) {
+                    if (mutation.type === 'childList' || mutation.type === 'characterData') {
+                        // Panggil fungsi playAudio ketika ada perubahan pada span
+                        // playAudio();
+
+                        // Otomatis klik tombol playButton
+                        const playButton = document.getElementById('playButton');
+                        playButton.click();
+                    }
+                }
+            });
+
+            // Konfigurasi observer
+            const config = {
+                attributes: true,
+                childList: true,
+                subtree: true
+            };
+
+            // Mulai mengamati target node untuk perubahan
+            observer.observe(targetNode, config);
+
+        }
+
+        // Panggil fungsi createObserver() untuk memulai pemantauan
+        createObserver();
 
         // menambahkan event listener untuk button
         document.getElementById('playButton').addEventListener('click', function() {

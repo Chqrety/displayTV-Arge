@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Models\Antrian;
 use Illuminate\Http\Request;
 
 class AntrianController extends Controller
@@ -11,21 +12,13 @@ class AntrianController extends Controller
      */
     public function index()
     {
+        return view('pages.antrian.index');
+    }
+
+    public function data()
+    {
         // Data nomor antrian dan poli
-        $data = [
-            [
-                'nomor_antrian' => 'C.24',
-                'poli' => 'Poli 3'
-            ],
-            [
-                'nomor_antrian' => 'D.56',
-                'poli' => 'Poli 4'
-            ],
-            [
-                'nomor_antrian' => 'H.76',
-                'poli' => 'Poli 8'
-            ]
-        ];
+        $data = Antrian::select('no_antrian', 'no_poli')->get();
 
         // Mengembalikan response JSON
         return response()->json($data);
@@ -44,7 +37,44 @@ class AntrianController extends Controller
      */
     public function store(Request $request)
     {
+        $validatedData = $request;
 
+        Antrian::create([
+            'no_antrian' => $validatedData['no_antrian'],
+            'no_poli' => $validatedData['no_poli']
+        ]);
+
+        return redirect('/antrian');
+    }
+    private function generateRandomAntrian()
+    {
+        $letters = 'ABCDEFGHIJKLMNOPQRSTUVWXYZ';
+        $randomLetter = $letters[rand(0, strlen($letters) - 1)];
+        $randomNumber = str_pad(rand(1, 99), 2, '0', STR_PAD_LEFT);
+        return "{$randomLetter}.{$randomNumber}";
+    }
+
+    private function generateRandomPoli()
+    {
+        return rand(1, 9);
+    }
+    public function generate(Request $request)
+    {
+        // Generate nomor antrian dan nomor poli
+        $no_antrian = $this->generateRandomAntrian();
+        $no_poli = $this->generateRandomPoli();
+
+        // Simpan data ke dalam database
+        $antrian = new Antrian();
+        $antrian->no_antrian = $no_antrian;
+        $antrian->no_poli = $no_poli;
+        $antrian->save();
+
+        // Kembalikan response JSON
+        return response()->json([
+            'nomor_antrian' => $no_antrian,
+            'poli' => $no_poli
+        ]);
     }
 
     /**

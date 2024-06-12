@@ -13,10 +13,15 @@ class DisplayController extends Controller
      */
     public function index()
     {
+        // URL API
         $baseUrl = URL::to('/');
-        $messages = ['Welcome to our website!', 'Latest news: Laravel 11 is released!', 'Check out our new features!'];
-        return view('pages.display.index', compact('messages', 'baseUrl'));
+        $messages = [
+            'Welcome to our website!',
+            'Latest news: Laravel 11 is released!',
+            'Check out our new features!'
+        ];
 
+        return view('pages.display.index', compact('messages', 'baseUrl'));
     }
 
     public function data(Request $request)

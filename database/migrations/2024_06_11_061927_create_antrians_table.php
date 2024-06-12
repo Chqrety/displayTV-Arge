@@ -4,15 +4,16 @@ use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
 use Illuminate\Support\Facades\Schema;
 
-return new class extends Migration
-{
+return new class extends Migration {
     /**
      * Run the migrations.
      */
     public function up(): void
     {
-        Schema::create('antrian', function (Blueprint $table) {
+        Schema::create('antrians', function (Blueprint $table) {
             $table->id();
+            $table->string('no_antrian');
+            $table->string('no_poli');
             $table->timestamps();
         });
     }
@@ -22,6 +23,6 @@ return new class extends Migration
      */
     public function down(): void
     {
-        Schema::dropIfExists('antrian');
+        Schema::dropIfExists('antrians');
     }
 };
