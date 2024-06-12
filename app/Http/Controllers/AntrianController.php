@@ -24,6 +24,7 @@ class AntrianController extends Controller
         return response()->json($data);
     }
 
+
     /**
      * Show the form for creating a new resource.
      */
@@ -37,14 +38,22 @@ class AntrianController extends Controller
      */
     public function store(Request $request)
     {
-        $validatedData = $request;
-
-        Antrian::create([
-            'no_antrian' => $validatedData['no_antrian'],
-            'no_poli' => $validatedData['no_poli']
+        // Validasi data yang diterima dari formulir
+        $validatedData = $request->validate([
+            'no_antrian' => 'required|string|max:255',
+            'no_poli' => 'required|string|max:255',
         ]);
 
-        return redirect('/antrian');
+        // Simpan data yang diterima dari formulir ke dalam database atau tempat penyimpanan lainnya
+        // Misalnya:
+        $antrian = new Antrian();
+        $antrian->no_antrian = $validatedData['no_antrian'];
+        $antrian->no_poli = $validatedData['no_poli'];
+        $antrian->save();
+
+        // Beri respons JSON untuk memberi tahu klien bahwa data telah berhasil disimpan
+        return response()->json(['message' => 'Data stored successfully', 'data' => $validatedData])->redirect('/antrian');
+        ;
     }
     private function generateRandomAntrian()
     {

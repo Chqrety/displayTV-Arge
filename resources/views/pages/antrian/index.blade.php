@@ -13,25 +13,15 @@
                         <div class="flex flex-col">
                             <label for="no_antrian">Nomor Antrian</label>
                             <input class="rounded-lg border border-black bg-zinc-200 px-3 py-2 focus:outline-none"
-                                id="no_antrian" name="no_antrian" type="text">
+                                id="no_antrian" name="no_antrian" type="text" disabled>
                         </div>
                         <div class="flex flex-col">
                             <label for="no_poli">Nomor Poli</label>
                             <input class="rounded-lg border border-black bg-zinc-200 px-3 py-2 focus:outline-none"
-                                id="no_poli" name="no_poli" type="text">
+                                id="no_poli" name="no_poli" type="text" disabled>
                         </div>
                     </div>
                     <div>
-                        <button
-                            class="hidden rounded-lg bg-[#A1C398] px-3 py-2 transition-all hover:scale-105 hover:bg-lime-800 hover:text-white"
-                            id="generate_button" type="button">
-                            <span class="text-xl font-semibold">Generate</span>
-                        </button>
-                        <button
-                            class="hidden rounded-lg bg-[#A1C398] px-3 py-2 transition-all hover:scale-105 hover:bg-lime-800 hover:text-white"
-                            type="submit">
-                            <span class="text-xl font-semibold">Store<span>
-                        </button>
                         <button
                             class="rounded-lg bg-[#A1C398] px-3 py-2 transition-all hover:scale-105 hover:bg-lime-800 hover:text-white"
                             id="generate_button_api" type="button">
@@ -43,12 +33,32 @@
         </div>
     </section>
     <script>
-        document.getElementById('generate_button').addEventListener('click', function() {
+        document.getElementById('generate_button_api').addEventListener('click', function() {
+            // Generate random nomor antrian dan nomor poli
             const randomAntrian = generateRandomAntrian();
             const randomPoli = generateRandomPoli();
 
+            // Masukkan nomor antrian dan nomor poli ke dalam form
             document.getElementById('no_antrian').value = randomAntrian;
             document.getElementById('no_poli').value = randomPoli;
+
+            // Kirim permintaan POST ke URL API untuk menyimpan data
+            fetch('{{ route('antrian.tv.data') }}', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify({
+                        no_antrian: randomAntrian,
+                        no_poli: randomPoli
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    console.log('Data stored successfully:', data);
+                })
+                .catch(error => console.error('Error storing data:', error));
         });
 
         function generateRandomAntrian() {
@@ -61,22 +71,5 @@
         function generateRandomPoli() {
             return Math.floor(Math.random() * 9) + 1; // 1-9
         }
-
-        document.getElementById('generate_button_api').addEventListener('click', function() {
-            fetch('/antrian/generate', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}' // pastikan untuk menyertakan CSRF token jika menggunakan Laravel
-                    },
-                    body: JSON.stringify({})
-                })
-                .then(response => response.json())
-                .then(data => {
-                    document.getElementById('no_antrian').value = data.nomor_antrian;
-                    document.getElementById('no_poli').value = data.poli;
-                })
-                .catch(error => console.error('Error:', error));
-        });
     </script>
 @endsection

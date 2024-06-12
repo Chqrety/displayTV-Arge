@@ -4,6 +4,7 @@ namespace App\Http\Controllers;
 
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
+use Illuminate\Support\Facades\Cache;
 use Illuminate\Support\Facades\URL;
 
 class DisplayController extends Controller
@@ -26,8 +27,44 @@ class DisplayController extends Controller
 
     public function data(Request $request)
     {
-        $data = $request->all();
-        return response()->json($data);
+        // Mendekode data yang diterima dari request
+        $decodedData = json_decode($request->getContent(), true);
+
+        // Ambil data dari cache
+        $cachedData = Cache::get('antrian_data', []);
+
+        // Jika data dalam format JSON, tambahkan data baru ke cache
+        if (is_string($cachedData)) {
+            $cachedData = json_decode($cachedData, true);
+        }
+
+        // Tambahkan data baru ke awal array
+        array_unshift($cachedData, $decodedData);
+
+        // Batasi jumlah data agar tidak lebih dari lima
+        $cachedData = array_slice($cachedData, 0, 5);
+
+        // Simpan data yang telah diperbarui ke dalam cache
+        Cache::put('antrian_data', $cachedData);
+
+        return response()->json(['message' => 'Data received and cached.']);
+    }
+
+    public function getData()
+    {
+        // Ambil data dari cache
+        $cachedData = Cache::get('antrian_data', []);
+
+        return response()->json($cachedData);
+    }
+
+    public function deleteData()
+    {
+        // Lakukan logika untuk menghapus data
+        Cache::forget('antrian_data');
+
+        // Berikan respons sesuai kebutuhan, misalnya:
+        return response()->json(['message' => 'Data deleted successfully']);
     }
 
     /**

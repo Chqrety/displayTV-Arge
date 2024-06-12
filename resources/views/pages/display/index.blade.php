@@ -38,8 +38,8 @@
                                 <span class="text-xl font-bold text-white" id="text_no_antrian">NOMOR ANTRIAN</span>
                             </div>
                             <div class="bg-white/15 flex h-5/6 flex-col items-center justify-center rounded-lg text-white">
-                                <span class="text-9xl font-bold text-yellow-300" id="no_antrian_now">C.56</span>
-                                <span class="text-3xl font-medium" id="no_poli_now">POLI 5</span>
+                                <span class="text-9xl font-bold text-yellow-300" id="no_antrian_now"></span>
+                                <span class="text-3xl font-medium" id="no_poli_now"></span>
                             </div>
                         </div>
                     </div>
@@ -68,25 +68,105 @@
         setInterval(updateClock, 1000);
         updateClock();
 
-        var base_url = '{{ $baseUrl }}';
-        var urlAPI = base_url + '/antrian/data';
+        async function fetchDataFromApi() {
+            const apiURL = 'http://192.168.98.24:5000/api/antrian/tv';
+            const postURL = '{{ route('antrian.tv.data') }}';
 
-        async function fetchDataAntrian() {
             try {
-                const response = await fetch(urlAPI);
+                const response = await fetch(apiURL);
                 if (!response.ok) {
-                    throw new Error('Failed to fetch data');
+                    throw new Error('Failed to fetch data from API');
                 }
                 const data = await response.json();
+
+                // Kirim data ke route POST
+                await fetch(postURL, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
+                    },
+                    body: JSON.stringify(data)
+                });
+
+                // console.log('Data successfully sent to POST route');
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', fetchDataFromApi);
+
+        async function getData() {
+            const getURL = '{{ route('antrian.tv.get') }}';
+
+            try {
+                const response = await fetch(getURL);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data from GET route');
+                }
+                const data = await response.json();
+                // console.log('Data from GET route:', data);
+            } catch (error) {
+                console.error(error);
+            }
+        }
+
+        document.addEventListener('DOMContentLoaded', getData);
+
+        var base_url = '{{ $baseUrl }}';
+        var urlAPI = base_url + '/api/antrian/tv';
+
+        window.addEventListener('load', function() {
+            // Fetch untuk menghapus data pada API saat halaman dimuat ulang
+            fetch(urlAPI, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}' // Pastikan untuk menyertakan token CSRF jika menggunakan Laravel
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        console.log('API data cleared successfully.');
+                    } else {
+                        console.error('Failed to clear API data.');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        });
+
+        async function getDataAndUpdateUI() {
+            const getURL = '{{ route('antrian.tv.get') }}';
+
+            try {
+                const response = await fetch(getURL);
+                if (!response.ok) {
+                    throw new Error('Failed to fetch data from GET route');
+                }
+                const data = await response.json();
+                // console.log('Data from GET route:', data);
+
+                // Panggil fungsi updateUI dengan data yang diperoleh
                 updateUI(data);
             } catch (error) {
                 console.error(error);
             }
         }
 
+        // Fungsi untuk memulai polling
+        function startPolling() {
+            // Atur interval polling (misalnya, setiap 5 detik)
+            setInterval(getDataAndUpdateUI, 500); // Polling setiap 5 detik
+        }
+
+        // Panggil startPolling() untuk memulai polling
+        startPolling();
+
         function updateUI(data) {
-            const reversedData = data.reverse();
-            const firstFiveData = reversedData.slice(0, 5);
+            // Jika data adalah sebuah array, lanjutkan dengan membalikkan dan memprosesnya
+            // const reversedData = data.reverse();
+            const firstFiveData = data.slice(0, 5);
 
             for (let i = 0; i < firstFiveData.length; i++) {
                 const item = firstFiveData[i];
@@ -103,12 +183,6 @@
             document.getElementById('no_antrian_now').textContent = newestData.no_antrian;
             document.getElementById('no_poli_now').textContent = `POLI ${newestData.no_poli}`;
         }
-
-        // Panggil fetchDataAntrian() untuk pertama kali
-        fetchDataAntrian();
-
-        // Atur polling untuk memperbarui data setiap beberapa detik
-        setInterval(fetchDataAntrian, 1000); // Contoh: polling setiap 1 detik
 
         function splitText() {
             var text_no_antrian = document.getElementById('text_no_antrian').textContent;
