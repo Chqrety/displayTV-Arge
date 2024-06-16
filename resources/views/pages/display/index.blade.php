@@ -68,8 +68,11 @@
         setInterval(updateClock, 1000);
         updateClock();
 
+        var base_url = '{{ $baseUrl }}';
+        var urlAPI = base_url + '/api/antrian/tv';
+
         async function fetchDataFromApi() {
-            const apiURL = 'http://192.168.98.24:5000/api/antrian/tv';
+            const apiURL = urlAPI;
             const postURL = '{{ route('antrian.tv.data') }}';
 
             try {
@@ -113,9 +116,6 @@
         }
 
         document.addEventListener('DOMContentLoaded', getData);
-
-        var base_url = '{{ $baseUrl }}';
-        var urlAPI = base_url + '/api/antrian/tv';
 
         window.addEventListener('load', function() {
             // Fetch untuk menghapus data pada API saat halaman dimuat ulang

@@ -27,22 +27,26 @@ class DisplayController extends Controller
 
     public function data(Request $request)
     {
-        // Mendekode data yang diterima dari request
-        $decodedData = json_decode($request->getContent(), true);
+        // Mendapatkan data yang diterima dari permintaan
+        $receivedData = $request->all();
+
+        // Dekode data jika data dalam format JSON
+        if (is_string($receivedData)) {
+            $decodedData = json_decode($receivedData, true);
+            return response()->json($decodedData);
+        }
 
         // Ambil data dari cache
         $cachedData = Cache::get('antrian_data', []);
 
-        // Jika data dalam format JSON, tambahkan data baru ke cache
-        if (is_string($cachedData)) {
-            $cachedData = json_decode($cachedData, true);
+        // Periksa apakah data cache sudah mencapai lima
+        if (count($cachedData) >= 5) {
+            // Jika sudah lima, hapus data terakhir
+            array_pop($cachedData);
         }
 
         // Tambahkan data baru ke awal array
-        array_unshift($cachedData, $decodedData);
-
-        // Batasi jumlah data agar tidak lebih dari lima
-        $cachedData = array_slice($cachedData, 0, 5);
+        array_unshift($cachedData, $receivedData);
 
         // Simpan data yang telah diperbarui ke dalam cache
         Cache::put('antrian_data', $cachedData);
@@ -54,6 +58,12 @@ class DisplayController extends Controller
     {
         // Ambil data dari cache
         $cachedData = Cache::get('antrian_data', []);
+
+        // Dekode data jika data dalam format JSON
+        if (is_string($cachedData)) {
+            $decodedData = json_decode($cachedData, true);
+            return response()->json($decodedData);
+        }
 
         return response()->json($cachedData);
     }
