@@ -18,7 +18,10 @@ class AntrianController extends Controller
     public function data()
     {
         // Data nomor antrian dan poli
-        $data = Antrian::select('no_antrian', 'no_poli')->get();
+        $data = Antrian::select('no_antrian', 'no_poli', 'no_antrian_rm')
+            ->orderByDesc('created_at')
+            ->limit(5)
+            ->get();
 
         // Mengembalikan response JSON
         return response()->json($data);
@@ -40,20 +43,21 @@ class AntrianController extends Controller
     {
         // Validasi data yang diterima dari formulir
         $validatedData = $request->validate([
-            'no_antrian' => 'required|string|max:255',
-            'no_poli' => 'required|string|max:255',
+            'no_antrian' => 'nullable|string|max:255',
+            'no_poli' => 'nullable|integer|max:255',
+            'no_antrian_rm' => 'nullable|string|max:255',
         ]);
 
         // Simpan data yang diterima dari formulir ke dalam database atau tempat penyimpanan lainnya
         // Misalnya:
         $antrian = new Antrian();
-        $antrian->no_antrian = $validatedData['no_antrian'];
-        $antrian->no_poli = $validatedData['no_poli'];
+        $antrian->no_antrian = $validatedData['no_antrian'] ?? null;
+        $antrian->no_poli = $validatedData['no_poli'] ?? null;
+        $antrian->no_antrian_rm = $validatedData['no_antrian_rm'] ?? null;
         $antrian->save();
 
         // Beri respons JSON untuk memberi tahu klien bahwa data telah berhasil disimpan
-        return response()->json(['message' => 'Data stored successfully', 'data' => $validatedData])->redirect('/antrian');
-        ;
+        return response()->json(['message' => 'Data stored successfully', 'data' => $validatedData]);
     }
     private function generateRandomAntrian()
     {

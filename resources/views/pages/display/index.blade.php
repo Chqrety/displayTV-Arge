@@ -37,14 +37,14 @@
                             <div>
                                 <span class="text-xl font-bold text-white" id="text_no_antrian">NOMOR ANTRIAN</span>
                             </div>
-                            <div class="bg-white/15 flex h-5/6 flex-col items-center justify-center rounded-lg text-white">
+                            <div class="bg-white/15 flex h-5/6 flex-col items-center justify-center rounded-lg text-white"
+                                id="no_antrian_display">
                                 <span class="text-9xl font-bold text-yellow-300" id="no_antrian_now"></span>
                                 <span class="text-3xl font-medium" id="no_poli_now"></span>
                             </div>
                         </div>
                     </div>
                 </div>
-                <button class="mt-4 hidden rounded bg-white/10 p-2 text-white" id="playButton">Play</button>
             </div>
         </div>
         <div class="w-full overflow-hidden bg-black/30 py-1">
@@ -145,10 +145,10 @@
                     throw new Error('Failed to fetch data from GET route');
                 }
                 const data = await response.json();
-                // console.log('Data from GET route:', data);
 
                 // Panggil fungsi updateUI dengan data yang diperoleh
-                updateUI(data);
+                updateUIPoli(data);
+
             } catch (error) {
                 console.error(error);
             }
@@ -163,9 +163,8 @@
         // Panggil startPolling() untuk memulai polling
         startPolling();
 
-        function updateUI(data) {
+        function updateUIPoli(data) {
             // Jika data adalah sebuah array, lanjutkan dengan membalikkan dan memprosesnya
-            // const reversedData = data.reverse();
             const firstFiveData = data.slice(0, 5);
 
             for (let i = 0; i < firstFiveData.length; i++) {
@@ -184,7 +183,7 @@
             document.getElementById('no_poli_now').textContent = `POLI ${newestData.no_poli}`;
         }
 
-        function splitText() {
+        function splitTextPoli() {
             var text_no_antrian = document.getElementById('text_no_antrian').textContent;
             var no_antrian_now = document.getElementById('no_antrian_now').textContent;
             var no_poli_now = document.getElementById('no_poli_now').textContent;
@@ -241,13 +240,10 @@
             return textToSpeech;
         }
 
-        function playSpeech() {
-            var elements = splitText();
+        function playSpeechPoli() {
+            var elements = splitTextPoli();
             var path = base_url + '/assets/google_voices/';
             var playButton = document.getElementById('playButton');
-
-            // matikan button ketika sedang menjalankan audio
-            playButton.disabled = true;
 
             function playSequentially(index) {
                 if (index < elements.length) {
@@ -259,9 +255,6 @@
                     }).catch(error => {
                         console.log('Error playing audio:', error);
                     });
-                } else {
-                    // aktifkan button ketika audio telah selesai
-                    playButton.disabled = false;
                 }
             }
 
@@ -279,11 +272,7 @@
                 for (const mutation of mutationsList) {
                     if (mutation.type === 'childList' || mutation.type === 'characterData') {
                         // Panggil fungsi playAudio ketika ada perubahan pada span
-                        // playAudio();
-
-                        // Otomatis klik tombol playButton
-                        const playButton = document.getElementById('playButton');
-                        playButton.click();
+                        playSpeechPoli();
                     }
                 }
             });
@@ -302,10 +291,5 @@
 
         // Panggil fungsi createObserver() untuk memulai pemantauan
         createObserver();
-
-        // menambahkan event listener untuk button
-        document.getElementById('playButton').addEventListener('click', function() {
-            playSpeech();
-        });
     </script>
 @endsection

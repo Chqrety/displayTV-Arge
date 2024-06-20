@@ -12,8 +12,9 @@ return new class extends Migration {
     {
         Schema::create('antrians', function (Blueprint $table) {
             $table->id();
-            $table->string('no_antrian');
-            $table->string('no_poli');
+            $table->string('no_antrian')->nullable();
+            $table->string('no_poli')->nullable();
+            $table->string('no_antrian_rm')->nullable();
             $table->timestamps();
         });
     }
