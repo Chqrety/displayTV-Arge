@@ -93,7 +93,7 @@
         document.getElementById('generate_button_api').addEventListener('click', function() {
             // Generate random nomor antrian dan nomor poli
             const randomAntrian = generateRandomAntrian();
-            const randomPoli = generateRandomPoli();
+            const randomPoli = 'POLI ' + generateRandomPoli();
 
             // Masukkan nomor antrian dan nomor poli ke dalam form
             document.getElementById('no_antrian').value = randomAntrian;

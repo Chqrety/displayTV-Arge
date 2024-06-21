@@ -24,10 +24,11 @@
                             <div class="w-full p-2">
                                 <span class="text-xl font-medium text-white">Riwayat Antrian</span>
                             </div>
-                            <div class="flex h-full flex-col justify-around gap-5 px-5 py-3">
+                            <div class="flex h-full flex-col justify-around gap-5 px-5 py-3" id="riwayat_antrian">
                                 @for ($j = 1; $j <= 5; $j++)
                                     <div class="flex h-full w-full items-center justify-around bg-white/5 text-white">
                                         <span class="text-7xl font-medium" id="no_antrian_{{ $j }}"></span>
+                                        <span class="text-7xl font-medium" id="no_antrian_rm_{{ $j }}"></span>
                                         <span class="text-3xl font-medium" id="no_poli_{{ $j }}"></span>
                                     </div>
                                 @endfor
@@ -39,8 +40,6 @@
                             </div>
                             <div class="bg-white/15 flex h-5/6 flex-col items-center justify-center rounded-lg text-white"
                                 id="no_antrian_display">
-                                <span class="text-9xl font-bold text-yellow-300" id="no_antrian_now"></span>
-                                <span class="text-3xl font-medium" id="no_poli_now"></span>
                             </div>
                         </div>
                     </div>
@@ -71,52 +70,6 @@
         var base_url = '{{ $baseUrl }}';
         var urlAPI = base_url + '/api/antrian/tv';
 
-        async function fetchDataFromApi() {
-            const apiURL = urlAPI;
-            const postURL = '{{ route('antrian.tv.data') }}';
-
-            try {
-                const response = await fetch(apiURL);
-                if (!response.ok) {
-                    throw new Error('Failed to fetch data from API');
-                }
-                const data = await response.json();
-
-                // Kirim data ke route POST
-                await fetch(postURL, {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}'
-                    },
-                    body: JSON.stringify(data)
-                });
-
-                // console.log('Data successfully sent to POST route');
-            } catch (error) {
-                console.error(error);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', fetchDataFromApi);
-
-        async function getData() {
-            const getURL = '{{ route('antrian.tv.get') }}';
-
-            try {
-                const response = await fetch(getURL);
-                if (!response.ok) {
-                    throw new Error('Failed to fetch data from GET route');
-                }
-                const data = await response.json();
-                // console.log('Data from GET route:', data);
-            } catch (error) {
-                console.error(error);
-            }
-        }
-
-        document.addEventListener('DOMContentLoaded', getData);
-
         window.addEventListener('load', function() {
             // Fetch untuk menghapus data pada API saat halaman dimuat ulang
             fetch(urlAPI, {
@@ -145,9 +98,11 @@
                     throw new Error('Failed to fetch data from GET route');
                 }
                 const data = await response.json();
-
+                // console.log(data.status);
                 // Panggil fungsi updateUI dengan data yang diperoleh
-                updateUIPoli(data);
+                // updateUIPoli(data);
+                checkData(data);
+                // updateNoAntrianDisplay(data)
 
             } catch (error) {
                 console.error(error);
@@ -157,93 +112,221 @@
         // Fungsi untuk memulai polling
         function startPolling() {
             // Atur interval polling (misalnya, setiap 5 detik)
-            setInterval(getDataAndUpdateUI, 500); // Polling setiap 5 detik
+            setInterval(getDataAndUpdateUI, 1000); // Polling setiap 1 detik
         }
 
         // Panggil startPolling() untuk memulai polling
         startPolling();
 
-        function updateUIPoli(data) {
-            // Jika data adalah sebuah array, lanjutkan dengan membalikkan dan memprosesnya
-            const firstFiveData = data.slice(0, 5);
 
-            for (let i = 0; i < firstFiveData.length; i++) {
-                const item = firstFiveData[i];
-                const noAntrianSpan = document.getElementById(`no_antrian_${i + 1}`);
-                const noPoliSpan = document.getElementById(`no_poli_${i + 1}`);
-
-                if (noAntrianSpan && noPoliSpan) {
-                    noAntrianSpan.textContent = item.no_antrian;
-                    noPoliSpan.textContent = `POLI ${item.no_poli}`;
-                }
+        function checkData(data) {
+            const latestData = data[0];
+            // console.log(latestData.status);
+            if (latestData.status === "poli") {
+                updateNoAntrianDisplay(data);
+            } else if (latestData.status === "rekam medis") {
+                updateNoAntrianDisplay(data);
+            } else {
+                console.log('tidak ada status');
             }
-
-            const newestData = firstFiveData[0];
-            document.getElementById('no_antrian_now').textContent = newestData.no_antrian;
-            document.getElementById('no_poli_now').textContent = `POLI ${newestData.no_poli}`;
         }
 
-        function splitTextPoli() {
-            var text_no_antrian = document.getElementById('text_no_antrian').textContent;
-            var no_antrian_now = document.getElementById('no_antrian_now').textContent;
-            var no_poli_now = document.getElementById('no_poli_now').textContent;
+        function updateNoAntrianDisplay(data) {
+            const latestData = data[0];
+            const firstFiveData = data.slice(0, 5);
+            firstFiveData.forEach((item, index) => {
+                item.id = index + 1; // Menambahkan properti id ke setiap elemen data
 
-            // Split no_antrian menjadi elemen individu lalu filter dot
-            var no_antrian_elements = no_antrian_now.split('').filter(char => char !== '.');
+                // Dapatkan elemen div
+                const riwayat_antrian = document.getElementById('riwayat_antrian');
+                const noAntrianDisplay = document.getElementById('no_antrian_display');
 
-            // buat variable penguraian elemen no_antrian
-            var parsedElements = [];
-            for (let i = 0; i < no_antrian_elements.length; i++) {
-                let current = no_antrian_elements[i];
-                let next = no_antrian_elements[i + 1];
-                let prev = no_antrian_elements[i - 1];
+                if (latestData.status === "poli") {
+                    const noAntrianSpan = document.getElementById(`no_antrian_${item.id}`);
+                    const noAntrianRMSpan = document.getElementById(`no_antrian_rm_${item.id}`);
+                    const noPoliSpan = document.getElementById(`no_poli_${item.id}`);
 
-                // Handle satuan
-                if (current === '0') {
-                    parsedElements.push(current, next)
-                    i++;
-                } else if (current === '1') { // Handle belasan
-                    if (next === '0') {
-                        parsedElements.push('10');
-                        i++;
-                    } else if (next === '1') {
-                        parsedElements.push('11');
-                        i++;
-                    } else {
-                        parsedElements.push(next, 'belas');
-                        i++;
-                    }
-                } else if (current >= '2' && current <= '9') { // Handle puluhan
-                    if (next === '0') {
-                        parsedElements.push(current, 'puluh');
-                        i++;
-                    } else {
-                        parsedElements.push(current, next);
-                        i++;
+
+                    if (noAntrianSpan && noAntrianRMSpan && noPoliSpan) {
+                        noAntrianSpan.textContent = item.no_antrian;
+                        noAntrianRMSpan.textContent = item.no_antrian_rm;
+                        noPoliSpan.textContent = item.no_poli;
                     }
 
-                } else { // Handle variable
-                    parsedElements.push(current);
+                    noAntrianDisplay.innerHTML = `
+                <span id='no_antrian_latest' class="text-9xl font-bold text-yellow-300">${latestData.no_antrian}</span>
+                <span id='no_poli_latest' class="text-3xl font-medium">${latestData.no_poli}</span>
+                `;
+
+                } else if (latestData.status === "rekam medis") {
+                    const noAntrianSpan = document.getElementById(`no_antrian_${item.id}`);
+                    const noAntrianRMSpan = document.getElementById(`no_antrian_rm_${item.id}`);
+                    const noPoliSpan = document.getElementById(`no_poli_${item.id}`);
+
+
+                    if (noAntrianSpan && noAntrianRMSpan && noPoliSpan) {
+                        noAntrianSpan.textContent = item.no_antrian;
+                        noAntrianRMSpan.textContent = item.no_antrian_rm;
+                        noPoliSpan.textContent = item.no_poli;
+                    }
+                    noAntrianDisplay.innerHTML = `
+                <span id='no_antrian_rm_latest' class="text-9xl font-bold text-yellow-300">${latestData.no_antrian_rm}</span>
+                `;
+                } else {
+                    noAntrianDisplay.innerHTML = `
+                <span class="text-xl font-medium">Tidak ada status</span>
+                `;
                 }
+            });
+        }
+
+        // Variabel untuk menyimpan nilai sebelumnya
+        let previousAntrianValue = null;
+        let previousRMValue = null;
+        let previousPoliValue = null;
+        let dataChanged = false;
+
+        function splitTextPoli() {
+            if (document.getElementById('no_antrian_latest')) {
+                var text_no_antrian = document.getElementById('text_no_antrian').textContent;
+                var no_antrian_now = document.getElementById('no_antrian_latest').textContent;
+                var no_poli_now = document.getElementById('no_poli_latest').textContent;
+
+                // Memeriksa apakah nilai no_antrian_now atau no_poli_now telah berubah sebelum diproses
+                if (no_antrian_now !== previousAntrianValue || no_poli_now !== previousPoliValue) {
+                    // Memperbarui nilai sebelumnya dengan nilai saat ini
+                    previousAntrianValue = no_antrian_now;
+                    previousPoliValue = no_poli_now;
+
+                    // Memisahkan no_antrian menjadi elemen individu dan memfilter karakter titik
+                    var no_antrian_elements = no_antrian_now.split('').filter(char => char !== '.');
+
+                    // Array untuk menyimpan elemen yang sudah diproses
+                    var parsedElements = [];
+                    for (let i = 0; i < no_antrian_elements.length; i++) {
+                        let current = no_antrian_elements[i];
+                        let next = no_antrian_elements[i + 1];
+                        let prev = no_antrian_elements[i - 1];
+
+                        // Menangani satuan
+                        if (current === '0') {
+                            parsedElements.push(current, next)
+                            i++;
+                        } else if (current === '1') { // Menangani belasan
+                            if (next === '0') {
+                                parsedElements.push('10');
+                                i++;
+                            } else if (next === '1') {
+                                parsedElements.push('11');
+                                i++;
+                            } else {
+                                parsedElements.push(next, 'belas');
+                                i++;
+                            }
+                        } else if (current >= '2' && current <= '9') { // Menangani puluhan
+                            if (next === '0') {
+                                parsedElements.push(current, 'puluh');
+                                i++;
+                            } else {
+                                parsedElements.push(current, next);
+                                i++;
+                            }
+                        } else { // Menangani nilai lainnya
+                            parsedElements.push(current);
+                        }
+                    }
+
+                    // Memisahkan no_poli_now dengan spasi menjadi elemen yang terpisah
+                    var no_poli_now_elements = no_poli_now.split(' ');
+                    if (no_poli_now_elements.length === 2) {
+                        no_poli_now_elements = [`ke ${no_poli_now_elements[0]}`, no_poli_now_elements[1]];
+                    }
+
+                    // Menggabungkan semua elemen ke dalam array textToSpeech
+                    var textToSpeech = [text_no_antrian, ...parsedElements, ...no_poli_now_elements];
+
+                    // console.log(textToSpeech);
+                    return textToSpeech;
+
+                    dataChanged = true;
+                } else {
+                    dataChanged = false;
+                    // Jika nilai tidak berubah, tidak perlu melakukan apa pun
+                    return null;
+                }
+            } else if (document.getElementById('no_antrian_rm_latest')) {
+                var text_no_antrian = document.getElementById('text_no_antrian').textContent;
+                var no_antrian_rm_now = document.getElementById('no_antrian_rm_latest').textContent;
+
+                // Memeriksa apakah nilai no_antrian_rm_now telah berubah sebelum diproses
+                if (no_antrian_rm_now !== previousRMValue) {
+                    // Memperbarui nilai sebelumnya dengan nilai saat ini
+                    previousRMValue = no_antrian_rm_now;
+
+                    // Memisahkan no_antrian_rm_now dengan spasi menjadi elemen yang terpisah
+                    var no_antrian_rm_elements = no_antrian_rm_now.split(' ');
+
+                    const no_antrian_rm = no_antrian_rm_elements.find(element => !isNaN(element));
+                    const warna_antrian = no_antrian_rm_elements.find(element => isNaN(element));
+                    console.log(no_antrian_rm);
+
+                    // Array untuk menyimpan elemen yang sudah diproses
+                    var parsedElements = [];
+                    for (let i = 0; i < no_antrian_rm.length; i++) {
+                        let current = no_antrian_rm[i];
+                        let next = no_antrian_rm[i + 1];
+                        let prev = no_antrian_rm[i - 1];
+
+                        // Menangani satuan
+                        if (current === '0') {
+                            parsedElements.push(current, next)
+                            i++;
+                        } else if (current === '1') { // Menangani belasan
+                            if (next === '0') {
+                                parsedElements.push('10');
+                                i++;
+                            } else if (next === '1') {
+                                parsedElements.push('11');
+                                i++;
+                            } else {
+                                parsedElements.push(next, 'belas');
+                                i++;
+                            }
+                        } else if (current >= '2' && current <= '9') { // Menangani puluhan
+                            if (next === '0') {
+                                parsedElements.push(current, 'puluh');
+                                i++;
+                            } else {
+                                parsedElements.push(current, next);
+                                i++;
+                            }
+                        } else { // Menangani nilai lainnya
+                            parsedElements.push(current);
+                        }
+                    }
+
+                    // Menggabungkan semua elemen ke dalam array textToSpeech
+                    var textToSpeech = [text_no_antrian, ...parsedElements, warna_antrian];
+
+                    // console.log(textToSpeech);
+                    return textToSpeech;
+
+                    dataChanged = true;
+                } else {
+                    dataChanged = false;
+                    // Jika nilai tidak berubah, tidak perlu melakukan apa pun
+                    return null;
+                }
+
+            } else {
+                console.log("error");
             }
-
-            // Split no_poli_now dari jarak menjadi kata yang terpisah
-            var no_poli_now_elements = no_poli_now.split(' ');
-            if (no_poli_now_elements.length === 2) {
-                no_poli_now_elements = [`ke ${no_poli_now_elements[0]}`, no_poli_now_elements[1]];
-            }
-
-            // gabungkan antara array tadi
-            var textToSpeech = [text_no_antrian, ...parsedElements, ...no_poli_now_elements];
-
-            console.log(textToSpeech);
-            return textToSpeech;
         }
 
         function playSpeechPoli() {
             var elements = splitTextPoli();
+            console.log(elements);
             var path = base_url + '/assets/google_voices/';
-            var playButton = document.getElementById('playButton');
 
             function playSequentially(index) {
                 if (index < elements.length) {
@@ -264,7 +347,7 @@
 
         // Fungsi untuk membuat observer
         function createObserver() {
-            const targetNode = document.getElementById('no_antrian_now');
+            const targetNode = document.getElementById('no_antrian_display');
 
             // Buat instance MutationObserver
             const observer = new MutationObserver((mutationsList, observer) => {
@@ -286,7 +369,6 @@
 
             // Mulai mengamati target node untuk perubahan
             observer.observe(targetNode, config);
-
         }
 
         // Panggil fungsi createObserver() untuk memulai pemantauan
