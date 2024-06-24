@@ -70,24 +70,24 @@
         var base_url = '{{ $baseUrl }}';
         var urlAPI = base_url + '/api/antrian/tv';
 
-        window.addEventListener('load', function() {
-            // Fetch untuk menghapus data pada API saat halaman dimuat ulang
-            fetch(urlAPI, {
-                    method: 'DELETE',
-                    headers: {
-                        'Content-Type': 'application/json',
-                        'X-CSRF-TOKEN': '{{ csrf_token() }}' // Pastikan untuk menyertakan token CSRF jika menggunakan Laravel
-                    }
-                })
-                .then(response => {
-                    if (response.ok) {
-                        console.log('API data cleared successfully.');
-                    } else {
-                        console.error('Failed to clear API data.');
-                    }
-                })
-                .catch(error => console.error('Error:', error));
-        });
+        // window.addEventListener('load', function() {
+        //     // Fetch untuk menghapus data pada API saat halaman dimuat ulang
+        //     fetch(urlAPI, {
+        //             method: 'DELETE',
+        //             headers: {
+        //                 'Content-Type': 'application/json',
+        //                 'X-CSRF-TOKEN': '{{ csrf_token() }}' // Pastikan untuk menyertakan token CSRF jika menggunakan Laravel
+        //             }
+        //         })
+        //         .then(response => {
+        //             if (response.ok) {
+        //                 console.log('API data cleared successfully.');
+        //             } else {
+        //                 console.error('Failed to clear API data.');
+        //             }
+        //         })
+        //         .catch(error => console.error('Error:', error));
+        // });
 
         async function getDataAndUpdateUI() {
             const getURL = '{{ route('antrian.tv.get') }}';
@@ -98,11 +98,8 @@
                     throw new Error('Failed to fetch data from GET route');
                 }
                 const data = await response.json();
-                // console.log(data.status);
-                // Panggil fungsi updateUI dengan data yang diperoleh
-                // updateUIPoli(data);
-                checkData(data);
-                // updateNoAntrianDisplay(data)
+
+                updateNoAntrianDisplay(data)
 
             } catch (error) {
                 console.error(error);
@@ -117,19 +114,6 @@
 
         // Panggil startPolling() untuk memulai polling
         startPolling();
-
-
-        function checkData(data) {
-            const latestData = data[0];
-            // console.log(latestData.status);
-            if (latestData.status === "poli") {
-                updateNoAntrianDisplay(data);
-            } else if (latestData.status === "rekam medis") {
-                updateNoAntrianDisplay(data);
-            } else {
-                console.log('tidak ada status');
-            }
-        }
 
         function updateNoAntrianDisplay(data) {
             const latestData = data[0];
@@ -251,6 +235,9 @@
                     dataChanged = true;
                 } else {
                     dataChanged = false;
+                    // var textToSpeech = ['no antrian', ...'U78', ...'POLI 9'];
+                    // return textToSpeech;
+
                     // Jika nilai tidak berubah, tidak perlu melakukan apa pun
                     return null;
                 }
@@ -347,7 +334,7 @@
 
         // Fungsi untuk membuat observer
         function createObserver() {
-            const targetNode = document.getElementById('no_antrian_display');
+            const targetNode = document.getElementById('riwayat_antrian');
 
             // Buat instance MutationObserver
             const observer = new MutationObserver((mutationsList, observer) => {
