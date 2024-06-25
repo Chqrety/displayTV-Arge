@@ -70,24 +70,24 @@
         var base_url = '{{ $baseUrl }}';
         var urlAPI = base_url + '/api/antrian/tv';
 
-        // window.addEventListener('load', function() {
-        //     // Fetch untuk menghapus data pada API saat halaman dimuat ulang
-        //     fetch(urlAPI, {
-        //             method: 'DELETE',
-        //             headers: {
-        //                 'Content-Type': 'application/json',
-        //                 'X-CSRF-TOKEN': '{{ csrf_token() }}' // Pastikan untuk menyertakan token CSRF jika menggunakan Laravel
-        //             }
-        //         })
-        //         .then(response => {
-        //             if (response.ok) {
-        //                 console.log('API data cleared successfully.');
-        //             } else {
-        //                 console.error('Failed to clear API data.');
-        //             }
-        //         })
-        //         .catch(error => console.error('Error:', error));
-        // });
+        window.addEventListener('load', function() {
+            // Fetch untuk menghapus data pada API saat halaman dimuat ulang
+            fetch(urlAPI, {
+                    method: 'DELETE',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        'X-CSRF-TOKEN': '{{ csrf_token() }}' // Pastikan untuk menyertakan token CSRF jika menggunakan Laravel
+                    }
+                })
+                .then(response => {
+                    if (response.ok) {
+                        console.log('API data cleared successfully.');
+                    } else {
+                        console.error('Failed to clear API data.');
+                    }
+                })
+                .catch(error => console.error('Error:', error));
+        });
 
         async function getDataAndUpdateUI() {
             const getURL = '{{ route('antrian.tv.get') }}';
@@ -165,153 +165,143 @@
         }
 
         // Variabel untuk menyimpan nilai sebelumnya
-        let previousAntrianValue = null;
-        let previousRMValue = null;
-        let previousPoliValue = null;
-        let dataChanged = false;
+        // let previousAntrianValue = null;
+        // let previousRMValue = null;
+        // let previousPoliValue = null;
 
-        function splitTextPoli() {
+        function splitText() {
             if (document.getElementById('no_antrian_latest')) {
-                var text_no_antrian = document.getElementById('text_no_antrian').textContent;
-                var no_antrian_now = document.getElementById('no_antrian_latest').textContent;
-                var no_poli_now = document.getElementById('no_poli_latest').textContent;
-
-                // Memeriksa apakah nilai no_antrian_now atau no_poli_now telah berubah sebelum diproses
-                if (no_antrian_now !== previousAntrianValue || no_poli_now !== previousPoliValue) {
-                    // Memperbarui nilai sebelumnya dengan nilai saat ini
-                    previousAntrianValue = no_antrian_now;
-                    previousPoliValue = no_poli_now;
-
-                    // Memisahkan no_antrian menjadi elemen individu dan memfilter karakter titik
-                    var no_antrian_elements = no_antrian_now.split('').filter(char => char !== '.');
-
-                    // Array untuk menyimpan elemen yang sudah diproses
-                    var parsedElements = [];
-                    for (let i = 0; i < no_antrian_elements.length; i++) {
-                        let current = no_antrian_elements[i];
-                        let next = no_antrian_elements[i + 1];
-                        let prev = no_antrian_elements[i - 1];
-
-                        // Menangani satuan
-                        if (current === '0') {
-                            parsedElements.push(current, next)
-                            i++;
-                        } else if (current === '1') { // Menangani belasan
-                            if (next === '0') {
-                                parsedElements.push('10');
-                                i++;
-                            } else if (next === '1') {
-                                parsedElements.push('11');
-                                i++;
-                            } else {
-                                parsedElements.push(next, 'belas');
-                                i++;
-                            }
-                        } else if (current >= '2' && current <= '9') { // Menangani puluhan
-                            if (next === '0') {
-                                parsedElements.push(current, 'puluh');
-                                i++;
-                            } else {
-                                parsedElements.push(current, next);
-                                i++;
-                            }
-                        } else { // Menangani nilai lainnya
-                            parsedElements.push(current);
-                        }
-                    }
-
-                    // Memisahkan no_poli_now dengan spasi menjadi elemen yang terpisah
-                    var no_poli_now_elements = no_poli_now.split(' ');
-                    if (no_poli_now_elements.length === 2) {
-                        no_poli_now_elements = [`ke ${no_poli_now_elements[0]}`, no_poli_now_elements[1]];
-                    }
-
-                    // Menggabungkan semua elemen ke dalam array textToSpeech
-                    var textToSpeech = [text_no_antrian, ...parsedElements, ...no_poli_now_elements];
-
-                    // console.log(textToSpeech);
-                    return textToSpeech;
-
-                    dataChanged = true;
-                } else {
-                    dataChanged = false;
-                    // var textToSpeech = ['no antrian', ...'U78', ...'POLI 9'];
-                    // return textToSpeech;
-
-                    // Jika nilai tidak berubah, tidak perlu melakukan apa pun
-                    return null;
-                }
+                return splitTextPoli();
             } else if (document.getElementById('no_antrian_rm_latest')) {
-                var text_no_antrian = document.getElementById('text_no_antrian').textContent;
-                var no_antrian_rm_now = document.getElementById('no_antrian_rm_latest').textContent;
-
-                // Memeriksa apakah nilai no_antrian_rm_now telah berubah sebelum diproses
-                if (no_antrian_rm_now !== previousRMValue) {
-                    // Memperbarui nilai sebelumnya dengan nilai saat ini
-                    previousRMValue = no_antrian_rm_now;
-
-                    // Memisahkan no_antrian_rm_now dengan spasi menjadi elemen yang terpisah
-                    var no_antrian_rm_elements = no_antrian_rm_now.split(' ');
-
-                    const no_antrian_rm = no_antrian_rm_elements.find(element => !isNaN(element));
-                    const warna_antrian = no_antrian_rm_elements.find(element => isNaN(element));
-                    console.log(no_antrian_rm);
-
-                    // Array untuk menyimpan elemen yang sudah diproses
-                    var parsedElements = [];
-                    for (let i = 0; i < no_antrian_rm.length; i++) {
-                        let current = no_antrian_rm[i];
-                        let next = no_antrian_rm[i + 1];
-                        let prev = no_antrian_rm[i - 1];
-
-                        // Menangani satuan
-                        if (current === '0') {
-                            parsedElements.push(current, next)
-                            i++;
-                        } else if (current === '1') { // Menangani belasan
-                            if (next === '0') {
-                                parsedElements.push('10');
-                                i++;
-                            } else if (next === '1') {
-                                parsedElements.push('11');
-                                i++;
-                            } else {
-                                parsedElements.push(next, 'belas');
-                                i++;
-                            }
-                        } else if (current >= '2' && current <= '9') { // Menangani puluhan
-                            if (next === '0') {
-                                parsedElements.push(current, 'puluh');
-                                i++;
-                            } else {
-                                parsedElements.push(current, next);
-                                i++;
-                            }
-                        } else { // Menangani nilai lainnya
-                            parsedElements.push(current);
-                        }
-                    }
-
-                    // Menggabungkan semua elemen ke dalam array textToSpeech
-                    var textToSpeech = [text_no_antrian, ...parsedElements, warna_antrian];
-
-                    // console.log(textToSpeech);
-                    return textToSpeech;
-
-                    dataChanged = true;
-                } else {
-                    dataChanged = false;
-                    // Jika nilai tidak berubah, tidak perlu melakukan apa pun
-                    return null;
-                }
-
+                return splitTextRM();
             } else {
-                console.log("error");
+                return null;
             }
         }
 
+        function splitTextPoli() {
+            var text_no_antrian = document.getElementById('text_no_antrian').textContent;
+            var no_antrian_now = document.getElementById('no_antrian_latest').textContent;
+            var no_poli_now = document.getElementById('no_poli_latest').textContent;
+
+            // console.log(text_no_antrian);
+            // console.log(no_poli_now);
+            // console.log(no_antrian_now);
+
+            // // Memperbarui nilai sebelumnya dengan nilai saat ini
+            // previousAntrianValue = no_antrian_now;
+            // previousPoliValue = no_poli_now;
+
+            // Memisahkan no_antrian menjadi elemen individu dan memfilter karakter titik
+            var no_antrian_elements = no_antrian_now.split('').filter(char => char !== '.');
+
+            // Array untuk menyimpan elemen yang sudah diproses
+            var parsedElements = [];
+            for (let i = 0; i < no_antrian_elements.length; i++) {
+                let current = no_antrian_elements[i];
+                let next = no_antrian_elements[i + 1];
+                let prev = no_antrian_elements[i - 1];
+
+                // Menangani satuan
+                if (current === '0') {
+                    parsedElements.push(current, next);
+                    i++;
+                } else if (current === '1') { // Menangani belasan
+                    if (next === '0') {
+                        parsedElements.push('10');
+                        i++;
+                    } else if (next === '1') {
+                        parsedElements.push('11');
+                        i++;
+                    } else {
+                        parsedElements.push(next, 'belas');
+                        i++;
+                    }
+                } else if (current >= '2' && current <= '9') { // Menangani puluhan
+                    if (next === '0') {
+                        parsedElements.push(current, 'puluh');
+                        i++;
+                    } else {
+                        parsedElements.push(current, next);
+                        i++;
+                    }
+                } else { // Menangani nilai lainnya
+                    parsedElements.push(current);
+                }
+            }
+
+            // Memisahkan no_poli_now dengan spasi menjadi elemen yang terpisah
+            var no_poli_now_elements = no_poli_now.split(' ');
+            if (no_poli_now_elements.length === 2) {
+                no_poli_now_elements = [`ke ${no_poli_now_elements[0]}`, no_poli_now_elements[1]];
+            }
+
+            // Menggabungkan semua elemen ke dalam array textToSpeech
+            var textToSpeech = [text_no_antrian, ...parsedElements, ...no_poli_now_elements];
+
+            // console.log('asda');
+            return textToSpeech;
+        }
+
+        function splitTextRM() {
+            var text_no_antrian = document.getElementById('text_no_antrian').textContent;
+            var no_antrian_rm_now = document.getElementById('no_antrian_rm_latest').textContent;
+
+            console.log(no_antrian_rm_now);
+
+            // Memperbarui nilai sebelumnya dengan nilai saat ini
+            // previousRMValue = no_antrian_rm_now;
+
+            // Memisahkan no_antrian_rm_now dengan spasi menjadi elemen yang terpisah
+            var no_antrian_rm_elements = no_antrian_rm_now.split(' ');
+
+            const no_antrian_rm = no_antrian_rm_elements.find(element => !isNaN(element));
+            const warna_antrian = no_antrian_rm_elements.find(element => isNaN(element));
+
+            // Array untuk menyimpan elemen yang sudah diproses
+            var parsedElements = [];
+            for (let i = 0; i < no_antrian_rm.length; i++) {
+                let current = no_antrian_rm[i];
+                let next = no_antrian_rm[i + 1];
+                let prev = no_antrian_rm[i - 1];
+
+                // Menangani satuan
+                if (current === '0') {
+                    parsedElements.push(current, next);
+                    i++;
+                } else if (current === '1') { // Menangani belasan
+                    if (next === '0') {
+                        parsedElements.push('10');
+                        i++;
+                    } else if (next === '1') {
+                        parsedElements.push('11');
+                        i++;
+                    } else {
+                        parsedElements.push(next, 'belas');
+                        i++;
+                    }
+                } else if (current >= '2' && current <= '9') { // Menangani puluhan
+                    if (next === '0') {
+                        parsedElements.push(current, 'puluh');
+                        i++;
+                    } else {
+                        parsedElements.push(current, next);
+                        i++;
+                    }
+                } else { // Menangani nilai lainnya
+                    parsedElements.push(current);
+                }
+            }
+
+            // Menggabungkan semua elemen ke dalam array textToSpeech
+            var textToSpeech = [text_no_antrian, ...parsedElements, warna_antrian];
+
+            // console.log('rm');
+            return textToSpeech;
+        }
+
         function playSpeechPoli() {
-            var elements = splitTextPoli();
+            var elements = splitText();
             console.log(elements);
             var path = base_url + '/assets/google_voices/';
 
@@ -336,13 +326,26 @@
         function createObserver() {
             const targetNode = document.getElementById('riwayat_antrian');
 
+            // Simpan nilai awal targetNode untuk membandingkan
+            let previousValue = targetNode.textContent.trim();
+
             // Buat instance MutationObserver
             const observer = new MutationObserver((mutationsList, observer) => {
                 // Periksa setiap mutasi yang terjadi
                 for (const mutation of mutationsList) {
-                    if (mutation.type === 'childList' || mutation.type === 'characterData') {
-                        // Panggil fungsi playAudio ketika ada perubahan pada span
-                        playSpeechPoli();
+                    if (
+                        mutation.type === 'childList' ||
+                        mutation.type === 'characterData' ||
+                        (mutation.type === 'attributes' && mutation.attributeName === 'data-value')
+                    ) {
+                        // Periksa nilai saat ini setelah mutasi
+                        const currentValue = targetNode.textContent.trim();
+
+                        // Panggil fungsi playAudio jika nilai berubah atau mutasi terjadi
+                        if (currentValue !== previousValue) {
+                            playSpeechPoli();
+                            previousValue = currentValue; // Update nilai sebelumnya
+                        }
                     }
                 }
             });
