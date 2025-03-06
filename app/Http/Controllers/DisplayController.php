@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use Illuminate\Contracts\View\View;
 use Illuminate\Http\Request;
 use GuzzleHttp\Client;
 use Illuminate\Support\Facades\Cache;
@@ -40,7 +41,7 @@ class DisplayController extends Controller
         $cachedData = Cache::get('antrian_data', []);
 
         // Periksa apakah data cache sudah mencapai lima
-        if (count($cachedData) >= 5) {
+        if (count($cachedData) >= 10) {
             // Jika sudah lima, hapus data terakhir
             array_pop($cachedData);
         }

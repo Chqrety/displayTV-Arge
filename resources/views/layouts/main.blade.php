@@ -10,8 +10,8 @@
 </head>
 
 <body>
-    {{-- <main class="bg-gradient-to-r from-sky-800 to-blue-400"> --}}
-    <main class="bg-gradient-to-r from-[#40a2da] to-[#86c548]">
+    <main class="bg-[#40a2da]">
+        {{-- <main class="bg-gradient-to-r from-[#40a2da] to-[#86c548]"> --}}
         @yield('content')
     </main>
 </body>
